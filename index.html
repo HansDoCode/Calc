@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sailor Piece Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:       #0d0e14;
+    --surface:  #13141d;
+    --card:     #181924;
+    --border:   #272838;
+    --border2:  #3a3c52;
+    --gold:     #c9a84c;
+    --gold2:    #e8c97a;
+    --gold-dim: #6b5520;
+    --text:     #ddd8cc;
+    --muted:    #7a7896;
+    --accent:   #5a8fa8;
+    --accent2:  #7fb8d4;
+    --red:      #c45c5c;
+    --green:    #5cac7e;
+    --radius:   10px;
+    --shadow:   0 4px 24px rgba(0,0,0,0.5);
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', Georgia, serif;
+    font-size: 17px;
+    min-height: 100vh;
+    padding: 0;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Subtle background texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 10% 0%, rgba(90,143,168,0.07) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 90% 100%, rgba(201,168,76,0.06) 0%, transparent 55%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .wrap { max-width: 780px; margin: 0 auto; padding: 32px 16px 64px; position: relative; z-index: 1; }
+
+  /* ── Header ── */
+  header { text-align: center; margin-bottom: 36px; }
+  header .eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 11px; letter-spacing: 4px;
+    color: var(--gold-dim); text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  header h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(22px, 6vw, 36px);
+    font-weight: 700; color: var(--gold2);
+    text-shadow: 0 0 30px rgba(201,168,76,0.25);
+    letter-spacing: 1px; line-height: 1.2;
+  }
+  header p {
+    color: var(--muted); font-size: 14px;
+    margin-top: 8px; font-style: italic;
+  }
+  .divider {
+    width: 120px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+    margin: 16px auto 0;
+  }
+
+  /* ── Section labels ── */
+  .section-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px; letter-spacing: 3px;
+    color: var(--muted); text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  /* ── Preset selector ── */
+  .presets { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 28px; }
+  .preset-btn {
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase;
+    padding: 7px 14px; border-radius: 6px;
+    border: 1px solid var(--border2);
+    background: var(--card); color: var(--muted);
+    cursor: pointer; transition: all .18s;
+    white-space: nowrap;
+  }
+  .preset-btn:hover { border-color: var(--gold); color: var(--gold2); }
+  .preset-btn.active {
+    border-color: var(--gold); background: rgba(201,168,76,0.1); color: var(--gold2);
+  }
+
+  /* ── Card ── */
+  .card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 22px 20px;
+    box-shadow: var(--shadow); margin-bottom: 20px;
+  }
+
+  /* ── Item name row ── */
+  .item-header {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 18px; flex-wrap: wrap;
+  }
+  .item-icon {
+    width: 40px; height: 40px; border-radius: 8px;
+    background: linear-gradient(135deg, rgba(90,143,168,0.3), rgba(201,168,76,0.15));
+    border: 1px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .item-title { flex: 1; }
+  .item-title input {
+    background: transparent; border: none; outline: none;
+    font-family: 'Cinzel', serif; font-size: 17px;
+    color: var(--gold2); width: 100%;
+    border-bottom: 1px solid var(--border2);
+    padding: 2px 0; transition: border-color .15s;
+  }
+  .item-title input:focus { border-color: var(--gold); }
+  .item-title small { color: var(--muted); font-size: 12px; }
+
+  /* ── Quantity control ── */
+  .qty-row {
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 22px; flex-wrap: wrap;
+  }
+  .qty-label { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 1px; color: var(--muted); }
+  .qty-control {
+    display: flex; align-items: center; gap: 0;
+    border: 1px solid var(--border2); border-radius: 8px; overflow: hidden;
+  }
+  .qty-btn {
+    width: 36px; height: 36px; background: var(--surface);
+    border: none; color: var(--gold2); font-size: 18px;
+    cursor: pointer; transition: background .15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .qty-btn:hover { background: rgba(201,168,76,0.12); }
+  .qty-input {
+    width: 56px; height: 36px; background: transparent;
+    border: none; outline: none; text-align: center;
+    font-family: 'Cinzel', serif; font-size: 16px; font-weight: 600;
+    color: var(--text);
+    border-left: 1px solid var(--border); border-right: 1px solid var(--border);
+  }
+  /* Hide spinners */
+  .qty-input::-webkit-outer-spin-button,
+  .qty-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .qty-input[type=number] { -moz-appearance: textfield; }
+
+  /* ── Materials list ── */
+  .mat-list { display: flex; flex-direction: column; gap: 10px; }
+  .mat-row {
+    display: grid;
+    grid-template-columns: 32px 1fr auto auto 32px;
+    gap: 8px; align-items: center;
+    background: var(--surface); border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid var(--border);
+    transition: border-color .15s;
+    animation: fadeIn .22s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform: translateY(6px); } to { opacity:1; transform:none; } }
+  .mat-row:hover { border-color: var(--border2); }
+
+  .mat-emoji { font-size: 18px; text-align: center; }
+
+  .mat-name-input {
+    background: transparent; border: none; outline: none;
+    font-family: 'Crimson Pro', serif; font-size: 15px; color: var(--text);
+    width: 100%; min-width: 80px;
+    border-bottom: 1px solid transparent; transition: border-color .15s;
+  }
+  .mat-name-input:focus { border-color: var(--border2); }
+  .mat-name-input::placeholder { color: var(--muted); font-style: italic; }
+
+  .mat-per-input {
+    width: 48px; height: 30px; text-align: center;
+    background: rgba(201,168,76,0.07); border: 1px solid var(--gold-dim);
+    border-radius: 5px; color: var(--gold2);
+    font-family: 'Cinzel', serif; font-size: 13px; font-weight: 600;
+    outline: none;
+  }
+  .mat-per-input:focus { border-color: var(--gold); }
+  .mat-per-input::-webkit-outer-spin-button,
+  .mat-per-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .mat-per-input[type=number] { -moz-appearance: textfield; }
+
+  .mat-total {
+    font-family: 'Cinzel', serif; font-size: 14px;
+    font-weight: 700; color: var(--accent2);
+    min-width: 42px; text-align: right; white-space: nowrap;
+  }
+  .mat-total .unit { font-size: 10px; color: var(--muted); font-weight: 400; letter-spacing: 1px; margin-left: 2px; }
+
+  .mat-del {
+    background: none; border: none; cursor: pointer;
+    color: var(--border2); font-size: 16px;
+    width: 28px; height: 28px; border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s; flex-shrink: 0;
+  }
+  .mat-del:hover { background: rgba(196,92,92,0.15); color: var(--red); }
+
+  /* ── Add row ── */
+  .add-btn {
+    display: flex; align-items: center; gap: 8px;
+    background: none; border: 1px dashed var(--border2);
+    color: var(--muted); border-radius: 8px;
+    padding: 9px 14px; cursor: pointer; font-size: 13px;
+    font-family: 'Crimson Pro', serif; font-style: italic;
+    width: 100%; margin-top: 6px; transition: all .15s;
+  }
+  .add-btn:hover { border-color: var(--green); color: var(--green); }
+
+  /* ── Summary ── */
+  .summary-card {
+    background: linear-gradient(135deg, rgba(201,168,76,0.06) 0%, rgba(90,143,168,0.05) 100%);
+    border: 1px solid rgba(201,168,76,0.2);
+    border-radius: var(--radius); padding: 20px;
+    margin-bottom: 20px;
+  }
+  .summary-title {
+    font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 2px;
+    color: var(--gold); text-transform: uppercase; margin-bottom: 14px;
+  }
+  .summary-grid { display: flex; flex-direction: column; gap: 8px; }
+  .summary-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-radius: 6px;
+    background: rgba(0,0,0,0.2);
+    border-left: 2px solid var(--gold-dim);
+    transition: border-color .15s;
+  }
+  .summary-item:hover { border-color: var(--gold); }
+  .summary-mat { font-size: 15px; color: var(--text); }
+  .summary-qty {
+    font-family: 'Cinzel', serif; font-size: 16px; font-weight: 700;
+    color: var(--gold2);
+  }
+  .summary-qty .x { font-size: 11px; color: var(--gold-dim); margin-right: 3px; }
+
+  /* ── Multi-recipe ── */
+  .recipes-wrap { display: flex; flex-direction: column; gap: 20px; }
+
+  /* ── Footer buttons ── */
+  .action-bar {
+    display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px;
+  }
+  .btn {
+    font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 1.5px;
+    text-transform: uppercase; padding: 10px 18px; border-radius: 7px;
+    cursor: pointer; border: 1px solid; transition: all .18s;
+  }
+  .btn-primary {
+    background: rgba(201,168,76,0.12); border-color: var(--gold);
+    color: var(--gold2);
+  }
+  .btn-primary:hover { background: rgba(201,168,76,0.2); }
+  .btn-ghost {
+    background: transparent; border-color: var(--border2); color: var(--muted);
+  }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); background: var(--surface); }
+  .btn-danger {
+    background: transparent; border-color: transparent; color: var(--red);
+    font-size: 11px; padding: 10px 14px;
+  }
+  .btn-danger:hover { border-color: var(--red); background: rgba(196,92,92,0.08); }
+
+  /* ── Per-item note ── */
+  .per-note { font-size: 11px; color: var(--muted); font-style: italic; }
+
+  /* ── Collapsed ── */
+  .recipe-header-row {
+    display: flex; align-items: center; gap: 10px; cursor: pointer;
+    user-select: none; margin-bottom: 0;
+  }
+  .recipe-header-row .toggle-icon {
+    color: var(--muted); font-size: 13px; transition: transform .2s;
+    flex-shrink: 0; margin-left: auto;
+  }
+  .recipe-header-row.collapsed .toggle-icon { transform: rotate(-90deg); }
+  .recipe-body { margin-top: 18px; }
+  .recipe-body.hidden { display: none; }
+
+  /* ── Scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 480px) {
+    .mat-row { grid-template-columns: 28px 1fr auto auto 28px; gap: 6px; padding: 9px 8px; }
+    .mat-name-input { font-size: 14px; }
+    .mat-per-input { width: 42px; }
+    .mat-total { min-width: 36px; font-size: 13px; }
+    .card { padding: 16px 14px; }
+    header h1 { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Crafting Tool</div>
+    <h1>⚓ Sailor Piece Calculator</h1>
+    <p>Track materials for any crafted item — editable quantities, instant totals</p>
+    <div class="divider"></div>
+  </header>
+
+  <!-- Presets -->
+  <div class="section-label">Quick Presets</div>
+  <div class="presets" id="presetsBar"></div>
+
+  <!-- Recipes container -->
+  <div class="recipes-wrap" id="recipesWrap"></div>
+
+  <!-- Add recipe -->
+  <div class="action-bar">
+    <button class="btn btn-primary" onclick="addRecipe()">＋ Add New Item Set</button>
+  </div>
+
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────
+const PRESETS = [
+  {
+    name: "Sword",
+    icon: "⚔️",
+    materials: [
+      { emoji: "💠", name: "Mana Core",      perItem: 1 },
+      { emoji: "❄️", name: "Frost Brand",    perItem: 7 },
+      { emoji: "👑", name: "Corrupted Crown", perItem: 5 },
+    ]
+  },
+  {
+    name: "Staff",
+    icon: "🪄",
+    materials: [
+      { emoji: "✨", name: "Star Fragment",  perItem: 3 },
+      { emoji: "🌀", name: "Void Essence",   perItem: 2 },
+      { emoji: "🪨", name: "Ancient Stone",  perItem: 6 },
+    ]
+  },
+  {
+    name: "Armor",
+    icon: "🛡️",
+    materials: [
+      { emoji: "🔩", name: "Iron Plate",     perItem: 8 },
+      { emoji: "🧵", name: "Silk Thread",    perItem: 4 },
+      { emoji: "💎", name: "Gem Shard",      perItem: 2 },
+    ]
+  },
+];
+
+let recipes = [];
+let nextId = 1;
+
+const EMOJI_POOL = ["💠","❄️","👑","✨","🌀","🪨","🔩","🧵","💎","🔮","🌿","⚡","🔥","🌊","🎯","🌙","☀️","💀","🍃","🪬"];
+
+function randEmoji() { return EMOJI_POOL[Math.floor(Math.random() * EMOJI_POOL.length)]; }
+
+// ── Bootstrap ──────────────────────────────────────────
+function init() {
+  // render preset buttons
+  const bar = document.getElementById('presetsBar');
+  bar.innerHTML = '';
+  PRESETS.forEach((p, i) => {
+    const b = document.createElement('button');
+    b.className = 'preset-btn';
+    b.textContent = p.icon + ' ' + p.name;
+    b.onclick = () => loadPreset(i, b);
+    bar.appendChild(b);
+  });
+
+  // default: load sword preset
+  addRecipeFromPreset(PRESETS[0]);
+  document.querySelectorAll('.preset-btn')[0].classList.add('active');
+}
+
+function loadPreset(idx, btn) {
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  addRecipeFromPreset(PRESETS[idx]);
+}
+
+function addRecipeFromPreset(preset) {
+  const recipe = {
+    id: nextId++,
+    name: preset.name,
+    icon: preset.icon,
+    qty: 1,
+    collapsed: false,
+    materials: preset.materials.map((m, i) => ({
+      id: i,
+      emoji: m.emoji,
+      name: m.name,
+      perItem: m.perItem,
+    }))
+  };
+  recipes.push(recipe);
+  renderRecipes();
+}
+
+function addRecipe() {
+  const recipe = {
+    id: nextId++,
+    name: 'New Item',
+    icon: '📦',
+    qty: 1,
+    collapsed: false,
+    materials: [
+      { id: 0, emoji: randEmoji(), name: 'Material 1', perItem: 1 }
+    ]
+  };
+  recipes.push(recipe);
+  renderRecipes();
+  // scroll to bottom
+  setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 50);
+}
+
+// ── Render ─────────────────────────────────────────────
+function renderRecipes() {
+  const wrap = document.getElementById('recipesWrap');
+  wrap.innerHTML = '';
+  recipes.forEach(r => wrap.appendChild(buildRecipeCard(r)));
+}
+
+function buildRecipeCard(recipe) {
+  const card = document.createElement('div');
+  card.className = 'card';
+  card.id = 'recipe-' + recipe.id;
+
+  // Header row
+  const headerRow = document.createElement('div');
+  headerRow.className = 'recipe-header-row' + (recipe.collapsed ? ' collapsed' : '');
+  headerRow.onclick = (e) => {
+    if (e.target.closest('.item-title') || e.target.closest('.qty-row')) return;
+    recipe.collapsed = !recipe.collapsed;
+    headerRow.classList.toggle('collapsed', recipe.collapsed);
+    body.classList.toggle('hidden', recipe.collapsed);
+  };
+
+  // Icon + title
+  const iconEl = document.createElement('div');
+  iconEl.className = 'item-icon';
+  iconEl.textContent = recipe.icon;
+
+  const titleWrap = document.createElement('div');
+  titleWrap.className = 'item-title';
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.value = recipe.name;
+  nameInput.placeholder = 'Item name…';
+  nameInput.onclick = e => e.stopPropagation();
+  nameInput.oninput = e => { recipe.name = e.target.value; };
+  titleWrap.appendChild(nameInput);
+
+  const toggleIcon = document.createElement('span');
+  toggleIcon.className = 'toggle-icon';
+  toggleIcon.textContent = '▾';
+
+  headerRow.appendChild(iconEl);
+  headerRow.appendChild(titleWrap);
+  headerRow.appendChild(toggleIcon);
+
+  // Body
+  const body = document.createElement('div');
+  body.className = 'recipe-body' + (recipe.collapsed ? ' hidden' : '');
+
+  // Quantity row
+  const qtyRow = document.createElement('div');
+  qtyRow.className = 'qty-row';
+
+  const qtyLabel = document.createElement('span');
+  qtyLabel.className = 'qty-label';
+  qtyLabel.textContent = 'Quantity to Craft:';
+
+  const qtyCtrl = document.createElement('div');
+  qtyCtrl.className = 'qty-control';
+
+  const btnMinus = document.createElement('button');
+  btnMinus.className = 'qty-btn'; btnMinus.textContent = '−';
+  btnMinus.onclick = () => {
+    if (recipe.qty > 1) { recipe.qty--; updateRecipeTotals(recipe); }
+  };
+
+  const qtyInp = document.createElement('input');
+  qtyInp.type = 'number'; qtyInp.className = 'qty-input';
+  qtyInp.value = recipe.qty; qtyInp.min = 1; qtyInp.max = 9999;
+  qtyInp.oninput = e => {
+    const v = parseInt(e.target.value) || 1;
+    recipe.qty = Math.max(1, v);
+    e.target.value = recipe.qty;
+    updateRecipeTotals(recipe);
+  };
+
+  const btnPlus = document.createElement('button');
+  btnPlus.className = 'qty-btn'; btnPlus.textContent = '+';
+  btnPlus.onclick = () => { recipe.qty++; qtyInp.value = recipe.qty; updateRecipeTotals(recipe); };
+
+  qtyCtrl.appendChild(btnMinus);
+  qtyCtrl.appendChild(qtyInp);
+  qtyCtrl.appendChild(btnPlus);
+
+  qtyRow.appendChild(qtyLabel);
+  qtyRow.appendChild(qtyCtrl);
+
+  // Materials section label
+  const matLabel = document.createElement('div');
+  matLabel.style.cssText = 'font-family:Cinzel,serif;font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;';
+  matLabel.innerHTML = '<span>Materials</span><span style="font-style:italic;font-family:Crimson Pro,serif;font-size:11px;text-transform:none;letter-spacing:0">per 1 item → total</span>';
+
+  // Material list
+  const matList = document.createElement('div');
+  matList.className = 'mat-list';
+  matList.id = 'matlist-' + recipe.id;
+
+  recipe.materials.forEach(m => matList.appendChild(buildMatRow(recipe, m)));
+
+  // Add material button
+  const addMatBtn = document.createElement('button');
+  addMatBtn.className = 'add-btn';
+  addMatBtn.innerHTML = '＋ Add material';
+  addMatBtn.onclick = () => {
+    const newMat = { id: Date.now(), emoji: randEmoji(), name: '', perItem: 1 };
+    recipe.materials.push(newMat);
+    const row = buildMatRow(recipe, newMat);
+    matList.appendChild(row);
+    row.querySelector('.mat-name-input').focus();
+  };
+
+  // Summary
+  const summaryCard = buildSummary(recipe);
+
+  // Delete recipe
+  const actionRow = document.createElement('div');
+  actionRow.className = 'action-bar';
+  actionRow.style.marginTop = '14px';
+  const delBtn = document.createElement('button');
+  delBtn.className = 'btn btn-danger';
+  delBtn.textContent = '✕ Remove This Set';
+  delBtn.onclick = () => {
+    recipes = recipes.filter(r => r.id !== recipe.id);
+    card.style.animation = 'fadeIn .2s reverse';
+    setTimeout(() => card.remove(), 180);
+  };
+  actionRow.appendChild(delBtn);
+
+  body.appendChild(qtyRow);
+  body.appendChild(matLabel);
+  body.appendChild(matList);
+  body.appendChild(addMatBtn);
+  body.appendChild(summaryCard);
+  body.appendChild(actionRow);
+
+  card.appendChild(headerRow);
+  card.appendChild(body);
+  return card;
+}
+
+function buildMatRow(recipe, mat) {
+  const row = document.createElement('div');
+  row.className = 'mat-row';
+  row.id = 'matrow-' + recipe.id + '-' + mat.id;
+
+  const emojiEl = document.createElement('span');
+  emojiEl.className = 'mat-emoji'; emojiEl.textContent = mat.emoji;
+  emojiEl.title = 'Click to cycle icon';
+  emojiEl.style.cursor = 'pointer';
+  emojiEl.onclick = () => {
+    const cur = EMOJI_POOL.indexOf(mat.emoji);
+    mat.emoji = EMOJI_POOL[(cur + 1) % EMOJI_POOL.length];
+    emojiEl.textContent = mat.emoji;
+  };
+
+  const nameInp = document.createElement('input');
+  nameInp.type = 'text'; nameInp.className = 'mat-name-input';
+  nameInp.value = mat.name; nameInp.placeholder = 'Material name…';
+  nameInp.oninput = e => {
+    mat.name = e.target.value;
+    refreshSummary(recipe);
+  };
+
+  const perLabel = document.createElement('span');
+  perLabel.style.cssText = 'font-size:10px;color:var(--muted);font-family:Cinzel,serif;letter-spacing:1px;white-space:nowrap;';
+  perLabel.textContent = '×';
+
+  const perInp = document.createElement('input');
+  perInp.type = 'number'; perInp.className = 'mat-per-input';
+  perInp.value = mat.perItem; perInp.min = 0; perInp.max = 9999;
+  perInp.title = 'Amount needed per 1 item';
+  perInp.oninput = e => {
+    mat.perItem = Math.max(0, parseInt(e.target.value) || 0);
+    updateRecipeTotals(recipe);
+  };
+
+  const totalEl = document.createElement('div');
+  totalEl.className = 'mat-total';
+  totalEl.id = 'total-' + recipe.id + '-' + mat.id;
+  const t = mat.perItem * recipe.qty;
+  totalEl.innerHTML = `${t}<span class="unit">total</span>`;
+
+  const delBtn = document.createElement('button');
+  delBtn.className = 'mat-del'; delBtn.innerHTML = '✕';
+  delBtn.title = 'Remove material';
+  delBtn.onclick = () => {
+    recipe.materials = recipe.materials.filter(m => m.id !== mat.id);
+    row.style.opacity = '0'; row.style.transform = 'translateX(10px)';
+    row.style.transition = 'all .18s';
+    setTimeout(() => { row.remove(); refreshSummary(recipe); }, 180);
+  };
+
+  row.appendChild(emojiEl);
+  row.appendChild(nameInp);
+  row.appendChild(perLabel);
+  row.appendChild(perInp);
+  row.appendChild(totalEl);
+  row.appendChild(delBtn);
+  return row;
+}
+
+function buildSummary(recipe) {
+  const wrap = document.createElement('div');
+  wrap.className = 'summary-card';
+  wrap.id = 'summary-' + recipe.id;
+  wrap.style.marginTop = '16px';
+
+  const title = document.createElement('div');
+  title.className = 'summary-title';
+  title.id = 'summary-title-' + recipe.id;
+
+  const grid = document.createElement('div');
+  grid.className = 'summary-grid';
+  grid.id = 'summary-grid-' + recipe.id;
+
+  wrap.appendChild(title);
+  wrap.appendChild(grid);
+  refreshSummaryDOM(recipe, title, grid);
+  return wrap;
+}
+
+function refreshSummaryDOM(recipe, titleEl, gridEl) {
+  titleEl.textContent = `Total materials for ${recipe.qty}× ${recipe.name || 'Item'}`;
+  gridEl.innerHTML = '';
+  recipe.materials.forEach(m => {
+    if (!m.name && m.perItem === 0) return;
+    const item = document.createElement('div');
+    item.className = 'summary-item';
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'summary-mat';
+    nameSpan.textContent = (m.emoji || '') + ' ' + (m.name || '(unnamed)');
+    const qtySpan = document.createElement('span');
+    qtySpan.className = 'summary-qty';
+    qtySpan.innerHTML = `<span class="x">×</span>${m.perItem * recipe.qty}`;
+    item.appendChild(nameSpan);
+    item.appendChild(qtySpan);
+    gridEl.appendChild(item);
+  });
+}
+
+function refreshSummary(recipe) {
+  const titleEl = document.getElementById('summary-title-' + recipe.id);
+  const gridEl  = document.getElementById('summary-grid-' + recipe.id);
+  if (titleEl && gridEl) refreshSummaryDOM(recipe, titleEl, gridEl);
+}
+
+function updateRecipeTotals(recipe) {
+  recipe.materials.forEach(m => {
+    const el = document.getElementById('total-' + recipe.id + '-' + m.id);
+    if (el) el.innerHTML = `${m.perItem * recipe.qty}<span class="unit">total</span>`;
+  });
+  refreshSummary(recipe);
+}
+
+// ── Start ──────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>
