@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Calculator</title>
+<link rel="icon" type="image/x-icon" href="/hns-icon.png.png">
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,400&display=swap" rel="stylesheet"/>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['Cinzel', 'serif'],
+          body:    ['Crimson Pro', 'Georgia', 'serif'],
+        },
+        colors: {
+          bg:      '#0b0c12',
+          surface: '#11121a',
+          card:    '#161720',
+          border:  '#252636',
+          border2: '#363750',
+          gold:    '#c9a84c',
+          gold2:   '#e8c97a',
+          golddim: '#5a4518',
+          accent:  '#4e8aa3',
+          accent2: '#7ab5d0',
+          muted:   '#6e6c88',
+          danger:  '#b55555',
+          success: '#4e9e72',
+        },
+        keyframes: {
+          fadeIn:  { from:{ opacity:'0', transform:'translateY(8px)' },  to:{ opacity:'1', transform:'none' } },
+          slideUp: { from:{ opacity:'0', transform:'translateY(16px)' }, to:{ opacity:'1', transform:'none' } },
+          modalIn: { from:{ opacity:'0', transform:'scale(.93) translateY(14px)' }, to:{ opacity:'1', transform:'none' } },
+          shimmer: { '0%':{ backgroundPosition:'-400px 0' }, '100%':{ backgroundPosition:'400px 0' } },
+        },
+        animation: {
+          'fade-in':  'fadeIn .25s ease both',
+          'slide-up': 'slideUp .3s ease both',
+          'modal-in': 'modalIn .32s cubic-bezier(.16,1,.3,1) both',
+          'shimmer':  'shimmer 3s linear infinite',
+        },
+      }
+    }
+  }
+</script>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{background:#0b0c12;font-family:'Crimson Pro',Georgia,serif;min-height:100vh;overflow-x:hidden}
+  body::before{
+    content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background:
+      radial-gradient(ellipse 70% 50% at 5% 0%,rgba(78,138,163,.09) 0%,transparent 55%),
+      radial-gradient(ellipse 45% 40% at 95% 100%,rgba(201,168,76,.07) 0%,transparent 55%);
+  }
+  ::-webkit-scrollbar{width:5px}
+  ::-webkit-scrollbar-track{background:#0b0c12}
+  ::-webkit-scrollbar-thumb{background:#363750;border-radius:3px}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none}
+  input[type=number]{-moz-appearance:textfield}
+  .gold-shimmer{
+    background:linear-gradient(90deg,#c9a84c 0%,#f0d988 40%,#c9a84c 60%,#e8c97a 100%);
+    background-size:400px 100%;
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    animation:shimmer 3s linear infinite;
+  }
+  .dashed-add{border:1.5px dashed #363750;transition:border-color .2s,color .2s}
+  .dashed-add:hover{border-color:#4e9e72;color:#4e9e72}
+</style>
+</head>
+<body class="relative z-0 text-[#ddd8cc]">
+
+<!-- ▓▓ ONBOARDING MODAL ▓▓ -->
+<div id="onboardOverlay"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+  <div class="relative w-full max-w-sm mx-4 bg-card border border-border2 rounded-2xl p-8 shadow-2xl animate-modal-in">
+    <!-- subtle glow border -->
+    <div class="absolute -inset-px rounded-2xl pointer-events-none"
+      style="background:linear-gradient(135deg,rgba(201,168,76,.15),rgba(78,138,163,.1));border-radius:1rem;"></div>
+
+    <div class="text-center mb-7">
+      <div class="text-5xl mb-3">⚓</div>
+      <h2 class="font-display text-xl font-bold text-gold2 tracking-wide">Welcome, Sailor!</h2>
+      <p class="text-muted text-sm mt-1.5 font-body italic">Tell us who you are before we set sail</p>
+    </div>
+
+    <div class="space-y-4">
+      <!-- FB -->
+      <div>
+        <label class="block font-display text-[9px] tracking-[2.5px] uppercase text-muted mb-1.5">Facebook Name</label>
+        <div class="flex items-center gap-2.5 bg-surface border border-border rounded-xl px-3 py-2.5
+                    focus-within:border-gold/60 transition-colors duration-150">
+          <span class="text-lg shrink-0">👤</span>
+          <input id="ob_fb" type="text" placeholder="Your Facebook name"
+            class="flex-1 bg-transparent outline-none text-[#ddd8cc] text-base placeholder:text-muted/40 font-body"/>
+        </div>
+      </div>
+      <!-- Roblox -->
+      <div>
+        <label class="block font-display text-[9px] tracking-[2.5px] uppercase text-muted mb-1.5">Roblox Username</label>
+        <div class="flex items-center gap-2.5 bg-surface border border-border rounded-xl px-3 py-2.5
+                    focus-within:border-gold/60 transition-colors duration-150">
+          <span class="text-lg shrink-0">🎮</span>
+          <input id="ob_rblx" type="text" placeholder="Your Roblox username"
+            class="flex-1 bg-transparent outline-none text-[#ddd8cc] text-base placeholder:text-muted/40 font-body"/>
+        </div>
+      </div>
+    </div>
+
+    <p id="ob_err" class="text-danger text-xs mt-2.5 hidden font-body italic">
+      ⚠ Please fill in both fields to continue.
+    </p>
+
+    <button onclick="submitOnboard()"
+      class="mt-6 w-full py-3 rounded-xl font-display text-[10px] tracking-[2px] uppercase font-semibold
+             bg-gold/10 border border-gold text-gold2 hover:bg-gold/20 active:scale-[.98] transition-all duration-150">
+      Set Sail →
+    </button>
+  </div>
+</div>
+
+<!-- ▓▓ EDIT PROFILE MODAL ▓▓ -->
+<div id="editOverlay"
+  class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm hidden">
+  <div class="relative w-full max-w-sm mx-4 bg-card border border-border2 rounded-2xl p-8 shadow-2xl animate-modal-in">
+    <h2 class="font-display text-lg font-bold text-gold2 mb-5 tracking-wide">Edit Profile</h2>
+    <div class="space-y-4">
+      <div>
+        <label class="block font-display text-[9px] tracking-[2.5px] uppercase text-muted mb-1.5">Facebook Name</label>
+        <div class="flex items-center gap-2.5 bg-surface border border-border rounded-xl px-3 py-2.5 focus-within:border-gold/60 transition-colors">
+          <span>👤</span>
+          <input id="ed_fb" type="text" class="flex-1 bg-transparent outline-none text-[#ddd8cc] text-base font-body"/>
+        </div>
+      </div>
+      <div>
+        <label class="block font-display text-[9px] tracking-[2.5px] uppercase text-muted mb-1.5">Roblox Username</label>
+        <div class="flex items-center gap-2.5 bg-surface border border-border rounded-xl px-3 py-2.5 focus-within:border-gold/60 transition-colors">
+          <span>🎮</span>
+          <input id="ed_rblx" type="text" class="flex-1 bg-transparent outline-none text-[#ddd8cc] text-base font-body"/>
+        </div>
+      </div>
+    </div>
+    <div class="flex gap-3 mt-6">
+      <button onclick="closeEdit()"
+        class="flex-1 py-2.5 rounded-xl font-display text-[9px] tracking-[2px] uppercase
+               border border-border2 text-muted hover:text-[#ddd8cc] hover:border-border transition-all">
+        Cancel
+      </button>
+      <button onclick="saveEdit()"
+        class="flex-1 py-2.5 rounded-xl font-display text-[9px] tracking-[2px] uppercase
+               bg-gold/10 border border-gold text-gold2 hover:bg-gold/20 transition-all">
+        Save
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ▓▓ MAIN APP ▓▓ -->
+<div class="relative z-10 max-w-2xl mx-auto px-4 pb-28 pt-8">
+
+  <!-- Header -->
+  <header class="text-center mb-8 animate-fade-in">
+    <p class="font-display text-[9px] tracking-[4px] uppercase text-muted mb-2">Crafting Tool</p>
+    <h1 class="font-display font-black text-3xl sm:text-4xl gold-shimmer tracking-wide leading-tight">
+      H&S Calculator
+    </h1>
+    <!-- User pill -->
+    <button id="userPill" onclick="openEdit()"
+      class="inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full bg-surface border border-border
+             text-sm hover:border-border2 transition-all duration-150 group">
+      <span class="w-1.5 h-1.5 rounded-full bg-accent2 group-hover:bg-gold transition-colors"></span>
+      <span id="pill_fb"   class="font-display text-[11px] text-accent2">—</span>
+      <span class="text-muted text-xs">·</span>
+      <span id="pill_rblx" class="font-display text-[11px] text-gold">—</span>
+      <span class="text-muted text-[10px] ml-0.5 group-hover:text-[#ddd8cc] transition-colors">✎</span>
+    </button>
+    <div class="w-24 h-px mx-auto mt-4"
+      style="background:linear-gradient(90deg,transparent,rgba(201,168,76,.35),transparent)"></div>
+  </header>
+
+  <!-- Presets row -->
+  <section class="mb-6 animate-fade-in" style="animation-delay:.06s">
+    <p class="font-display text-[9px] tracking-[3px] uppercase text-muted mb-2.5">Quick Presets</p>
+    <div class="flex flex-wrap gap-2" id="presetsBar"></div>
+  </section>
+
+  <!-- Recipe cards -->
+  <div id="recipesWrap" class="space-y-4"></div>
+
+  <!-- Add set -->
+  <button onclick="addBlankRecipe()"
+    class="mt-4 w-full py-3 rounded-xl font-display text-[10px] tracking-[2px] uppercase
+           bg-gold/5 border border-gold/25 text-gold/60
+           hover:bg-gold/10 hover:border-gold/50 hover:text-gold2 transition-all duration-150
+           animate-fade-in" style="animation-delay:.14s">
+    ＋ Add New Item Set
+  </button>
+</div>
+
+<script>
+// ── Keys ──────────────────────────────────────
+const LS_U = 'spc_v2_user';
+const LS_R = 'spc_v2_recipes';
+
+// ── Emoji pool ────────────────────────────────
+const EMOJIS = ['💠','❄️','👑','✨','🌀','🪨','🔩','🧵','💎','🔮','🌿','⚡','🔥','🌊','🎯','🌙','☀️','💀','🍃','🪬','🗡️','🛡️','🧪','🎴','🪄','🫀','🌸','🍄','🐉','🌑'];
+const PRESETS = [
+  { name:'Sets', icon:'⚔️', mats:[
+    { e:'💠', n:'Mana Core',       p:1 },
+    { e:'❄️', n:'Frost Brand',     p:7 },
+    { e:'👑', n:'Corrupted Crown', p:5 },
+  ]},
+ /* { name:'Staff', icon:'🪄', mats:[
+    { e:'✨', n:'Star Fragment', p:3 },
+    { e:'🌀', n:'Void Essence',  p:2 },
+    { e:'🪨', n:'Ancient Stone', p:6 },
+  ]},
+  { name:'Armor', icon:'🛡️', mats:[
+    { e:'🔩', n:'Iron Plate',  p:8 },
+    { e:'🧵', n:'Silk Thread', p:4 },
+    { e:'💎', n:'Gem Shard',   p:2 },
+  ]},
+  */
+];
+
+// ── State ─────────────────────────────────────
+let user    = { fb:'', rblx:'' };
+let recipes = [];
+let _id     = 1;
+const uid   = () => _id++;
+const randE = () => EMOJIS[Math.floor(Math.random()*EMOJIS.length)];
+
+// ── Persist ───────────────────────────────────
+function save(){
+  localStorage.setItem(LS_U, JSON.stringify(user));
+  localStorage.setItem(LS_R, JSON.stringify(recipes));
+}
+function load(){
+  try{ user    = JSON.parse(localStorage.getItem(LS_U)) || {fb:'',rblx:''}; }catch{}
+  try{ recipes = JSON.parse(localStorage.getItem(LS_R)) || []; }catch{}
+  let max=0;
+  recipes.forEach(r=>{ max=Math.max(max,r.id||0); (r.mats||[]).forEach(m=>{ max=Math.max(max,m.id||0); }); });
+  _id = max+1;
+}
+
+// ── Onboarding ────────────────────────────────
+function showOnboard(){
+  document.getElementById('onboardOverlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('ob_fb').focus(), 120);
+}
+function submitOnboard(){
+  const fb   = document.getElementById('ob_fb').value.trim();
+  const rblx = document.getElementById('ob_rblx').value.trim();
+  const err  = document.getElementById('ob_err');
+  if(!fb||!rblx){ err.classList.remove('hidden'); return; }
+  err.classList.add('hidden');
+  user = {fb,rblx}; save();
+  document.getElementById('onboardOverlay').classList.add('hidden');
+  updatePill();
+  if(!recipes.length) loadPreset(PRESETS[0]);
+  else renderAll();
+}
+
+// ── Edit profile ──────────────────────────────
+function openEdit(){
+  document.getElementById('ed_fb').value   = user.fb;
+  document.getElementById('ed_rblx').value = user.rblx;
+  document.getElementById('editOverlay').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('ed_fb').focus(), 80);
+}
+function closeEdit(){ document.getElementById('editOverlay').classList.add('hidden'); }
+function saveEdit(){
+  const fb   = document.getElementById('ed_fb').value.trim();
+  const rblx = document.getElementById('ed_rblx').value.trim();
+  if(!fb||!rblx) return;
+  user={fb,rblx}; save(); updatePill(); closeEdit();
+}
+
+// Enter shortcut
+document.addEventListener('keydown', e=>{
+  if(e.key!=='Enter') return;
+  if(!document.getElementById('onboardOverlay').classList.contains('hidden')) submitOnboard();
+  else if(!document.getElementById('editOverlay').classList.contains('hidden')) saveEdit();
+});
+
+function updatePill(){
+  document.getElementById('pill_fb').textContent   = user.fb   || '—';
+  document.getElementById('pill_rblx').textContent = user.rblx || '—';
+}
+
+// ── Presets bar ───────────────────────────────
+function renderPresets(){
+  const bar = document.getElementById('presetsBar');
+  bar.innerHTML='';
+  PRESETS.forEach(p=>{
+    const b=document.createElement('button');
+    b.className='font-display text-[9px] tracking-[1.5px] uppercase px-3.5 py-1.5 rounded-lg border border-border2 bg-card text-muted hover:border-gold hover:text-gold2 transition-all duration-150';
+    b.textContent=p.icon+' '+p.name;
+    b.onclick=()=>loadPreset(p);
+    bar.appendChild(b);
+  });
+}
+
+// ── Recipe helpers ────────────────────────────
+function loadPreset(preset){
+  const r={
+    id:uid(), name:preset.name, icon:preset.icon, qty:1, collapsed:false,
+    mats: preset.mats.map(m=>({ id:uid(), e:m.e, n:m.n, p:m.p }))
+  };
+  recipes.push(r); save(); renderAll();
+  scrollTo('recipe-'+r.id);
+}
+function addBlankRecipe(){
+  const r={
+    id:uid(), name:'New Item', icon:'📦', qty:1, collapsed:false,
+    mats:[ {id:uid(), e:randE(), n:'', p:1} ]
+  };
+  recipes.push(r); save(); renderAll();
+  scrollTo('recipe-'+r.id, ()=>{
+    const el=document.getElementById('recipe-'+r.id);
+    if(el){ const ni=el.querySelector('.nm-inp'); if(ni) ni.focus(); }
+  });
+}
+function removeRecipe(id){
+  const el=document.getElementById('recipe-'+id);
+  if(el){ el.style.cssText='transition:.18s;opacity:0;transform:translateX(10px)'; }
+  setTimeout(()=>{ recipes=recipes.filter(r=>r.id!==id); save(); renderAll(); }, 200);
+}
+function scrollTo(id, cb){
+  setTimeout(()=>{
+    const el=document.getElementById(id);
+    if(el) el.scrollIntoView({behavior:'smooth',block:'nearest'});
+    if(cb) setTimeout(cb,80);
+  }, 60);
+}
+
+// ── Render all ────────────────────────────────
+function renderAll(){
+  const wrap=document.getElementById('recipesWrap');
+  wrap.innerHTML='';
+  recipes.forEach(r=>wrap.appendChild(mkCard(r)));
+}
+
+// ── Build card ────────────────────────────────
+function mkCard(recipe){
+  const card=el('div','bg-card border border-border rounded-xl overflow-hidden shadow-xl animate-slide-up');
+  card.id='recipe-'+recipe.id;
+
+  /* ─ Header bar ─ */
+  const hdr=el('div','flex items-center gap-3 px-4 py-3 cursor-pointer select-none border-b border-border');
+  hdr.style.background='linear-gradient(90deg,rgba(201,168,76,.04),transparent)';
+
+  const iconBox=el('div','w-9 h-9 rounded-lg flex items-center justify-center text-xl shrink-0');
+  iconBox.style.cssText='background:linear-gradient(135deg,rgba(78,138,163,.25),rgba(201,168,76,.12));border:1px solid #363750';
+  iconBox.textContent=recipe.icon;
+
+  const namePart=el('div','flex-1 min-w-0');
+  const nameInp=el('input','nm-inp w-full bg-transparent outline-none font-display text-base text-gold2 tracking-wide border-b border-transparent focus:border-golddim transition-colors truncate');
+  nameInp.type='text'; nameInp.value=recipe.name; nameInp.placeholder='Item name…';
+  nameInp.onclick=e=>e.stopPropagation();
+  nameInp.oninput=e=>{ recipe.name=e.target.value; refreshSumTitle(recipe); save(); };
+  namePart.appendChild(nameInp);
+
+  const chev=el('span','text-muted text-sm transition-transform duration-200 ml-auto shrink-0');
+  chev.textContent='▾';
+  if(recipe.collapsed) chev.style.transform='rotate(-90deg)';
+
+  const body=el('div','px-4 py-4');
+  body.style.display=recipe.collapsed?'none':'';
+
+  hdr.onclick=e=>{
+    if(e.target===nameInp) return;
+    recipe.collapsed=!recipe.collapsed; save();
+    chev.style.transform=recipe.collapsed?'rotate(-90deg)':'';
+    body.style.display=recipe.collapsed?'none':'';
+  };
+
+  hdr.appendChild(iconBox); hdr.appendChild(namePart); hdr.appendChild(chev);
+
+  /* ─ Qty row ─ */
+  const qtyRow=el('div','flex items-center gap-3 mb-4 flex-wrap');
+  const qLabel=el('span','font-display text-[9px] tracking-[2px] uppercase text-muted');
+  qLabel.textContent='Quantity:';
+
+  const qCtrl=el('div','flex items-center border border-border2 rounded-lg overflow-hidden');
+  const mkQB=(txt,fn)=>{
+    const b=el('button','w-9 h-9 bg-surface text-gold2 text-lg flex items-center justify-center hover:bg-gold/10 transition-colors font-display');
+    b.textContent=txt; b.onclick=fn; return b;
+  };
+  const qInp=el('input','w-14 h-9 text-center bg-transparent outline-none font-display text-base text-[#ddd8cc] border-x border-border');
+  qInp.type='number'; qInp.min=1; qInp.max=9999; qInp.value=recipe.qty;
+  qInp.oninput=e=>{ recipe.qty=Math.max(1,parseInt(e.target.value)||1); e.target.value=recipe.qty; refreshTotals(recipe); save(); };
+
+  qCtrl.appendChild(mkQB('−',()=>{ if(recipe.qty>1){ recipe.qty--; qInp.value=recipe.qty; refreshTotals(recipe); save(); }}));
+  qCtrl.appendChild(qInp);
+  qCtrl.appendChild(mkQB('+',()=>{ recipe.qty++; qInp.value=recipe.qty; refreshTotals(recipe); save(); }));
+  qtyRow.appendChild(qLabel); qtyRow.appendChild(qCtrl);
+
+  /* ─ Mat column headers ─ */
+  const mHdr=el('div','grid gap-2 mb-2 px-1');
+  mHdr.style.gridTemplateColumns='28px 1fr 60px 52px 28px';
+  mHdr.innerHTML=`<span></span>
+    <span class="font-display text-[9px] tracking-[2px] uppercase text-muted">Material</span>
+    <span class="font-display text-[9px] tracking-[2px] uppercase text-muted text-center">Per 1</span>
+    <span class="font-display text-[9px] tracking-[2px] uppercase text-accent2 text-right">Total</span>
+    <span></span>`;
+
+  /* ─ Mat list ─ */
+  const mList=el('div','space-y-2');
+  mList.id='ml-'+recipe.id;
+  recipe.mats.forEach(m=>mList.appendChild(mkMatRow(recipe,m)));
+
+  /* ─ Add mat ─ */
+  const addBtn=el('button','dashed-add w-full mt-3 py-2 rounded-lg font-body italic text-muted text-sm flex items-center justify-center gap-1.5');
+  addBtn.innerHTML='＋ Add material';
+  addBtn.onclick=()=>{
+    const m={id:uid(),e:randE(),n:'',p:1};
+    recipe.mats.push(m); save();
+    const row=mkMatRow(recipe,m);
+    mList.appendChild(row);
+    setTimeout(()=>row.querySelector('.mn-inp').focus(),20);
+  };
+
+  /* ─ Summary ─ */
+  const sum=mkSummary(recipe);
+
+  /* ─ Delete ─ */
+  const delRow=el('div','flex justify-end mt-3');
+  const delBtn=el('button','font-display text-[9px] tracking-[1.5px] uppercase text-danger/50 hover:text-danger border border-transparent hover:border-danger/30 rounded-lg px-3 py-1.5 transition-all');
+  delBtn.textContent='✕ Remove Set';
+  delBtn.onclick=()=>removeRecipe(recipe.id);
+  delRow.appendChild(delBtn);
+
+  body.appendChild(qtyRow);
+  body.appendChild(mHdr);
+  body.appendChild(mList);
+  body.appendChild(addBtn);
+  body.appendChild(sum);
+  body.appendChild(delRow);
+
+  card.appendChild(hdr); card.appendChild(body);
+  return card;
+}
+
+// ── Build mat row ─────────────────────────────
+function mkMatRow(recipe, mat){
+  const row=el('div','grid gap-2 items-center bg-surface rounded-lg px-2 py-2 border border-border hover:border-border2 transition-colors animate-fade-in');
+  row.style.gridTemplateColumns='28px 1fr 60px 52px 28px';
+  row.id='mr-'+recipe.id+'-'+mat.id;
+
+  // emoji cycler
+  const eBtn=el('button','text-lg w-7 h-7 rounded flex items-center justify-center hover:bg-border transition-colors shrink-0');
+  eBtn.textContent=mat.e; eBtn.title='Click to change icon';
+  eBtn.onclick=()=>{
+    const i=EMOJIS.indexOf(mat.e);
+    mat.e=EMOJIS[(i+1)%EMOJIS.length];
+    eBtn.textContent=mat.e; refreshSum(recipe); save();
+  };
+
+  // name
+  const nInp=el('input','mn-inp w-full bg-transparent outline-none text-[#ddd8cc] text-[15px] font-body border-b border-transparent focus:border-border2 transition-colors placeholder:text-muted/40 truncate');
+  nInp.type='text'; nInp.value=mat.n; nInp.placeholder='Material…';
+  nInp.oninput=e=>{ mat.n=e.target.value; refreshSum(recipe); save(); };
+
+  // per-item
+  const pInp=el('input','w-full text-center bg-golddim/20 border border-golddim rounded-md py-1 text-gold2 font-display text-sm outline-none focus:border-gold transition-colors');
+  pInp.type='number'; pInp.min=0; pInp.max=9999; pInp.value=mat.p; pInp.title='Per 1 item';
+  pInp.oninput=e=>{ mat.p=Math.max(0,parseInt(e.target.value)||0); setTotal(recipe,mat); refreshSum(recipe); save(); };
+
+  // total
+  const tot=el('div','text-right font-display text-sm font-bold text-accent2');
+  tot.id='t-'+recipe.id+'-'+mat.id;
+  tot.textContent=mat.p*recipe.qty;
+
+  // delete
+  const dBtn=el('button','w-7 h-7 flex items-center justify-center rounded text-muted/40 hover:text-danger hover:bg-danger/10 transition-all text-base shrink-0');
+  dBtn.innerHTML='✕';
+  dBtn.onclick=()=>{
+    row.style.cssText='transition:.15s;opacity:0;transform:translateX(8px)';
+    setTimeout(()=>{ recipe.mats=recipe.mats.filter(m=>m.id!==mat.id); row.remove(); refreshSum(recipe); save(); },160);
+  };
+
+  row.appendChild(eBtn); row.appendChild(nInp); row.appendChild(pInp); row.appendChild(tot); row.appendChild(dBtn);
+  return row;
+}
+
+// ── Summary ───────────────────────────────────
+function mkSummary(recipe){
+  const wrap=el('div','mt-4 rounded-xl border border-gold/15 overflow-hidden');
+  wrap.id='sum-'+recipe.id;
+  wrap.style.background='linear-gradient(135deg,rgba(201,168,76,.05),rgba(78,138,163,.04))';
+
+  const ttl=el('div','px-3 py-2 font-display text-[9px] tracking-[2px] uppercase text-gold/70 border-b border-gold/10');
+  ttl.id='st-'+recipe.id;
+
+  const grid=el('div','divide-y divide-border/40');
+  grid.id='sg-'+recipe.id;
+
+  wrap.appendChild(ttl); wrap.appendChild(grid);
+  buildSumDOM(recipe, ttl, grid);
+  return wrap;
+}
+function buildSumDOM(recipe, ttl, grid){
+  ttl.textContent=`Total for ${recipe.qty}× ${recipe.name||'Item'}`;
+  grid.innerHTML='';
+  recipe.mats.forEach(m=>{
+    const row=el('div','flex items-center justify-between px-3 py-2.5 hover:bg-white/[.02] transition-colors');
+    const L=el('span','text-[#ddd8cc] text-[15px] font-body');
+    L.textContent=(m.e||'')+' '+(m.n||'(unnamed)');
+    const R=el('span','font-display text-base font-bold text-gold2');
+    R.innerHTML=`<span class="text-golddim text-xs mr-0.5">×</span>${m.p*recipe.qty}`;
+    row.appendChild(L); row.appendChild(R); grid.appendChild(row);
+  });
+}
+function refreshSum(recipe){
+  const t=document.getElementById('st-'+recipe.id);
+  const g=document.getElementById('sg-'+recipe.id);
+  if(t&&g) buildSumDOM(recipe,t,g);
+}
+function refreshSumTitle(recipe){
+  const t=document.getElementById('st-'+recipe.id);
+  if(t) t.textContent=`Total for ${recipe.qty}× ${recipe.name||'Item'}`;
+}
+function setTotal(recipe,mat){
+  const el=document.getElementById('t-'+recipe.id+'-'+mat.id);
+  if(el) el.textContent=mat.p*recipe.qty;
+}
+function refreshTotals(recipe){
+  recipe.mats.forEach(m=>setTotal(recipe,m));
+  refreshSum(recipe);
+}
+
+// ── Tiny helper ───────────────────────────────
+function el(tag, cls){
+  const e=document.createElement(tag);
+  if(cls) e.className=cls;
+  return e;
+}
+
+// ── Boot ──────────────────────────────────────
+function init(){
+  load();
+  renderPresets();
+  updatePill();
+  if(!user.fb||!user.rblx){
+    showOnboard();
+  } else {
+    if(!recipes.length) loadPreset(PRESETS[0]);
+    else renderAll();
+  }
+}
+
+init();
+</script>
+</body>
+</html>
