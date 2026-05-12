@@ -85,8 +85,8 @@
 
     <div class="text-center mb-7">
       <div class="text-5xl mb-3">⚓</div>
-      <h2 class="font-display text-xl font-bold text-gold2 tracking-wide">Welcome, Sailor!</h2>
-      <p class="text-muted text-sm mt-1.5 font-body italic">Tell us who you are before we set sail</p>
+      <h2 class="font-display text-xl font-bold text-gold2 tracking-wide">Welcome, Friends!</h2>
+      <p class="text-muted text-sm mt-1.5 font-body italic">Tell me who you are</p>
     </div>
 
     <div class="space-y-4">
@@ -119,7 +119,7 @@
     <button onclick="submitOnboard()"
       class="mt-6 w-full py-3 rounded-xl font-display text-[10px] tracking-[2px] uppercase font-semibold
              bg-gold/10 border border-gold text-gold2 hover:bg-gold/20 active:scale-[.98] transition-all duration-150">
-      Set Sail →
+      Confirm →
     </button>
   </div>
 </div>
@@ -210,10 +210,12 @@ const LS_R = 'spc_v2_recipes';
 // ── Emoji pool ────────────────────────────────
 const EMOJIS = ['💠','❄️','👑','✨','🌀','🪨','🔩','🧵','💎','🔮','🌿','⚡','🔥','🌊','🎯','🌙','☀️','💀','🍃','🪬','🗡️','🛡️','🧪','🎴','🪄','🫀','🌸','🍄','🐉','🌑'];
 const PRESETS = [
-  { name:'Sets', icon:'⚔️', mats:[
-    { e:'💠', n:'Mana Core',       p:1 },
-    { e:'❄️', n:'Frost Brand',     p:7 },
-    { e:'👑', n:'Corrupted Crown', p:5 },
+  { name: "Sailor Piece", icon:'🗡️', mats:[
+    { e:'🌸', n:'Heart',       p:100 },
+    { e:'🐉', n:'Divine Fragment',     p:8 },
+    { e:'🎯', n:'Sacred Bow', p:5 },
+    { e:'🌑', n:'Radiant Core',       p:3 },
+    { e:'✨', n:'Pink Gems',     p:1 },
   ]},
  /* { name:'Staff', icon:'🪄', mats:[
     { e:'✨', n:'Star Fragment', p:3 },
